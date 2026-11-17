@@ -401,3 +401,24 @@ func Run(src string) (string, error) {
 	err := vm.Interpret(src)
 	return b.String(), err
 }
+
+// Mark records the dictionary, code, data and literal pools, like MARKER.
+type Mark struct {
+	words, lits, strs int
+	here              int32
+	dp                int64
+}
+
+// Mark returns the current allocation state.
+func (vm *VM) Mark() Mark {
+	return Mark{len(vm.words), len(vm.lits), len(vm.strs), vm.here, vm.dp}
+}
+
+// Restore forgets everything defined since m was taken.
+func (vm *VM) Restore(m Mark) {
+	vm.words = vm.words[:m.words]
+	vm.lits = vm.lits[:m.lits]
+	vm.strs = vm.strs[:m.strs]
+	vm.here, vm.dp = m.here, m.dp
+	vm.reset()
+}

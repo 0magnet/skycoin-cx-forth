@@ -100,3 +100,18 @@ func TestStateAcrossLinesAndRecovery(t *testing.T) {
 		t.Fatalf("stack not cleared: %d", vm.Depth())
 	}
 }
+
+func TestMarkRestore(t *testing.T) {
+	var b strings.Builder
+	vm := New(&b)
+	_ = vm.Interpret(": A 1 ;")
+	m := vm.Mark()
+	_ = vm.Interpret(`: B ." x" ; VARIABLE V`)
+	vm.Restore(m)
+	if vm.find("B") >= 0 || vm.find("V") >= 0 || vm.find("A") < 0 {
+		t.Fatal("restore did not forget B and V")
+	}
+	if err := vm.Interpret("A ."); err != nil || b.String() != "1 " {
+		t.Fatalf("%v %q", err, b.String())
+	}
+}
