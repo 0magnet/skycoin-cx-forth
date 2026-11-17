@@ -95,6 +95,20 @@ func init() {
 		{"FALSE?", func(vm *VM) { vm.Push(Bool(vm.Pop().Truth() == False)) }, false},
 		{">TRI", func(vm *VM) { vm.Push(Tri(vm.Pop().Truth())) }, false},
 
+		// eForth vocabulary from ternary.fs, see doc.go
+		{"MAYBE", func(vm *VM) { vm.Push(Tri(Null)) }, false},
+		{"TNOT", primTNot, false},
+		{"TAND", func(vm *VM) { vm.tlogic('&') }, false},
+		{"TOR", func(vm *VM) { vm.tlogic('|') }, false},
+		{"TEQUIV", func(vm *VM) { vm.tlogic('E') }, false},
+		{"TIMPLY", func(vm *VM) { vm.tlogic('>') }, false},
+		{"TXOR", func(vm *VM) { vm.tlogic('^') }, false},
+		{"T.", primTDot, false},
+
+		// execution tokens are dictionary indices
+		{"'", func(vm *VM) { vm.Push(Int(int64(vm.tick()))) }, false},
+		{"EXECUTE", primExecute, false},
+
 		// memory, addresses are cell indices
 		{"@", func(vm *VM) {
 			if a := vm.addr(); a >= 0 {
@@ -126,6 +140,12 @@ func init() {
 		{"TYPE", func(vm *VM) { vm.print(vm.Pop(), 0) }, false},
 		{"CR", func(vm *VM) { vm.writeString("\n") }, false},
 		{"SPACE", func(vm *VM) { vm.writeString(" ") }, false},
+		{"SPACES", func(vm *VM) {
+			for n := vm.Pop().V; n > 0 && vm.err == nil; n-- {
+				vm.writeString(" ")
+			}
+		}, false},
+		{"PAGE", func(vm *VM) { vm.writeString("\x1b[2J\x1b[H") }, false},
 		{"EMIT", func(vm *VM) { vm.obuf = append(vm.obuf[:0], byte(vm.Pop().V)); vm.write(vm.obuf) }, false},
 		{".S", primDotS, false},
 		{"DECIMAL", func(vm *VM) { vm.base = 10 }, false},
@@ -185,6 +205,8 @@ func primAbs(vm *VM) {
 		} else {
 			vm.Push(F64(f))
 		}
+	case c.T == TTri:
+		vm.fail("arithmetic on a ternary value")
 	case c.T == TInt && c.V < 0:
 		vm.Push(Int(-c.V))
 	default:
@@ -192,21 +214,22 @@ func primAbs(vm *VM) {
 	}
 }
 
-// arith applies a binary arithmetic operator. Null operands give null.
+// arith applies a binary arithmetic operator. Ternary operands, NULL
+// included, are an error: a truth value is not a number.
 func (vm *VM) arith(op byte) {
 	b, a := vm.Pop(), vm.Pop()
 	if vm.err != nil {
-		return
-	}
-	if a.IsNull() || b.IsNull() {
-		vm.Push(Tri(Null))
 		return
 	}
 	if a.T == TStr && b.T == TStr && op == '+' {
 		vm.Push(vm.intern(vm.str(a) + vm.str(b)))
 		return
 	}
-	if a.T == TTri || b.T == TTri || a.T == TStr || b.T == TStr {
+	if a.T == TTri || b.T == TTri {
+		vm.fail("arithmetic on a ternary value")
+		return
+	}
+	if a.T == TStr || b.T == TStr {
 		vm.fail("type error in arithmetic")
 		return
 	}

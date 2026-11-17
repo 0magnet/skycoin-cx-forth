@@ -27,9 +27,33 @@
 // AND, OR and XOR on two integers stay bitwise, as in standard Forth. When
 // either operand is ternary, integers are read as Forth flags, zero false and
 // anything else true. Comparisons always return a ternary cell, and any NULL
-// operand makes the result NULL. Arithmetic on NULL also gives NULL, so an
-// unknown reading stays unknown through a calculation. KNOWN? NULL? TRUE?
-// and FALSE? test a value and never return NULL.
+// operand makes the result NULL. Arithmetic on any ternary cell, NULL
+// included, is an error rather than a value. A comment in the thread cited
+// below points out that + on ternary values is meaningless, and an unknown
+// reading can still be compared, which is where NULL propagation matters.
+// >I32 >INT >F32 >F64 are conversions, not arithmetic, and pass NULL
+// through. KNOWN? NULL? TRUE? and FALSE? test a value and never return NULL.
+//
+// # The eForth vocabulary
+//
+// MAYBE TNOT TAND TOR TEQUIV TIMPLY TXOR and T. follow ternary.fs by Marc
+// Petremann (ESP32forth), from the r/Forth thread "TERNARY LOGIC revisited"
+// https://www.reddit.com/r/Forth/comments/1xy20la/ternary_logic_revisited/
+// and its code
+// https://raw.githubusercontent.com/MPETREMANN11/eForth-Windows/main/INFERENCE/ternary.fs
+// which is adapted from https://rosettacode.org/wiki/Ternary_logic#Forth .
+//
+// That file encodes TRUE=-1 FALSE=0 MAYBE=1 in plain integers, so its AND
+// and OR are bitwise and still give Kleene results. This VM's tagged cells
+// use FALSE=-1 NULL=0 TRUE=1 instead. MAYBE here pushes the tagged NULL.
+// The T words work on both. With two integer operands they compute the
+// eForth definitions bit for bit and return an integer, so ESP32forth code
+// ports unchanged. With a tagged operand they read integers in the eForth
+// encoding, -1 true, 0 false, anything else maybe, and return a tagged cell.
+// T. prints T, F or ? for either form. AND OR NOT read integers as Forth
+// flags, the T words read them in the eForth encoding.
+//
+// testdata/ternary.fs is a verbatim copy that the tests load and run.
 //
 // # Conditionals on NULL
 //

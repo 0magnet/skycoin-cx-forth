@@ -69,8 +69,6 @@ func TestNullPropagation(t *testing.T) {
 	cases := []struct{ src, want string }{
 		{"NULL 3 < .", "null "},
 		{"3 NULL = .", "null "},
-		{"NULL 1 + .", "null "},
-		{"2.5 NULL * .", "null "},
 		{"NULL 0= .", "null "},
 		{"NULL >I32 . NULL >INT . NULL >F32 . NULL >F64 .", "null null null null "},
 		{"3 4 < . 4 3 < . 3 3 <= .", "true false true "},

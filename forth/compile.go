@@ -7,6 +7,7 @@ var compilePrims = []prim{
 	{":", primColon, false},
 	{";", primSemi, true},
 	{"EXIT", func(vm *VM) { vm.needCompile(); vm.emit(opExit, 0) }, true},
+	{"[']", primBracketTick, true},
 	{"RECURSE", func(vm *VM) { vm.needCompile(); vm.emit(opCall, vm.words[vm.cur].XT) }, true},
 	{"(", func(vm *VM) { vm.parseTo(')') }, true},
 	{"\\", func(vm *VM) { vm.parseTo('\n') }, true},

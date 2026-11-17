@@ -69,7 +69,13 @@ func TestErrors(t *testing.T) {
 		{"THEN", "THEN without IF"},
 		{": T GOTO 9 ;", "undefined label: 9"},
 		{"5000 @", "bad address"},
-		{"TRUE 1 +", "type error in arithmetic"},
+		{"TRUE 1 +", "arithmetic on a ternary value"},
+		{"NULL 1 +", "arithmetic on a ternary value"},
+		{"2.5 NULL *", "arithmetic on a ternary value"},
+		{"NULL ABS", "arithmetic on a ternary value"},
+		{"NULL NEGATE", "arithmetic on a ternary value"},
+		{"S\" a\" 1 +", "type error in arithmetic"},
+		{"99999 EXECUTE", "bad execution token"},
 		{": R RECURSE ; R", "return stack overflow"},
 	}
 	for _, c := range cases {
